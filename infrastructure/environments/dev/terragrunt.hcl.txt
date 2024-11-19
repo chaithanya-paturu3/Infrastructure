@@ -1,0 +1,19 @@
+terraform {
+  source = "../../infrastructure/modules"
+}
+
+inputs = {
+  environment        = "dev"
+  region_primary     = "eastus"
+  region_secondary   = "westus"
+  resource_group_name = "rg-dev"
+  vm_count           = 2
+  vm_size            = "Standard_B2ms"
+  vnet_name          = "vnet-dev"
+  subnet_name        = "subnet-dev"
+  admin_username     = "adminuser"
+  ssh_public_key     = "/path/to/id_rsa.pub"
+  ssh_private_key    = "/path/to/id_rsa"
+  ansible_playbook_path = "/path/to/ansible/playbook.yml"
+  app_binary_url     = "https://example.com/app-binary.tar.gz"
+}

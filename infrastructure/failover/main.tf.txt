@@ -1,0 +1,36 @@
+esource "azurerm_traffic_manager_profile" "failover" {
+  name                = "tm-${var.environment}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  profile_status      = "Enabled"
+  traffic_routing_method = "Priority"
+
+  dns_config {
+    relative_name = "app-${var.environment}"
+    ttl           = 30
+  }
+
+  monitor_config {
+    protocol = "HTTP"
+    port     = 80
+    path     = "/"
+  }
+}
+
+resource "azurerm_traffic_manager_endpoint" "primary" {
+  name                = "primary-endpoint"
+  profile_name        = azurerm_traffic_manager_profile.failover.name
+  resource_group_name = var.resource_group_name
+  type                = "azureEndpoints"
+  target_resource_id  = azurerm_lb.lb.id
+  priority            = 1
+}
+
+resource "azurerm_traffic_manager_endpoint" "secondary" {
+  name                = "secondary-endpoint"
+  profile_name        = azurerm_traffic_manager_profile.failover.name
+  resource_group_name = var.resource_group_name
+  type                = "azureEndpoints"
+  target_resource_id  = azurerm_lb_secondary.lb.id
+  priority            = 2
+}

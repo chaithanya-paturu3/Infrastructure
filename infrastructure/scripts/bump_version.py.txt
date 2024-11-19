@@ -1,0 +1,88 @@
+import argparse
+import subprocess
+import re
+import sys
+
+
+def get_latest_tag():
+    """Fetch the latest Git tag."""
+    try:
+        result = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode != 0:
+            return "0.0.0"  # Default to 0.0.0 if no tags exist
+        return result.stdout.strip()
+    except Exception as e:
+        print(f"Error fetching the latest tag: {e}")
+        sys.exit(1)
+
+
+def bump_version(version, part):
+    """Bump the given version according to the specified part (major, minor, patch)."""
+    try:
+        major, minor, patch = map(int, version.split("."))
+    except ValueError:
+        print(f"Invalid SemVer format: {version}")
+        sys.exit(1)
+
+    if part == "major":
+        major += 1
+        minor = 0
+        patch = 0
+    elif part == "minor":
+        minor += 1
+        patch = 0
+    elif part == "patch":
+        patch += 1
+    else:
+        print(f"Invalid part to bump: {part}")
+        sys.exit(1)
+
+    return f"{major}.{minor}.{patch}"
+
+
+def create_and_push_tag(new_tag):
+    """Create and push a new Git tag."""
+    try:
+        # Create the new tag
+        subprocess.run(["git", "tag", new_tag], check=True)
+
+        # Push the tag to the remote
+        subprocess.run(["git", "push", "origin", new_tag], check=True)
+        print(f"Successfully created and pushed tag {new_tag} to remote.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error during Git operation: {e}")
+        sys.exit(1)
+
+
+def validate_semver(tag):
+    """Validate that a tag adheres to SemVer."""
+    pattern = r"^\d+\.\d+\.\d+$"
+    if not re.match(pattern, tag):
+        print(f"Tag {tag} is not a valid SemVer tag.")
+        sys.exit(1)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="CLI to bump Git tags using SemVer.")
+    parser.add_argument("part", choices=["major", "minor", "patch"],
+                        help="The part of the version to bump: major, minor, or patch.")
+    args = parser.parse_args()
+
+    # Get the latest tag
+    latest_tag = get_latest_tag()
+    print(f"Latest tag: {latest_tag}")
+
+    # Validate the latest tag
+    validate_semver(latest_tag)
+
+    # Bump the version
+    new_tag = bump_version(latest_tag, args.part)
+    print(f"New tag: {new_tag}")
+
+    # Create and push the new tag
+    create_and_push_tag(new_tag)
+
+
+if __name__ == "__main__":
+    main()
