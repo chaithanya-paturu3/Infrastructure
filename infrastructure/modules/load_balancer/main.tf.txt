@@ -1,0 +1,26 @@
+resource "azurerm_lb" "lb" {
+  name                = "lb-${var.environment}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  sku                 = "Standard"
+}
+
+resource "azurerm_lb_backend_address_pool" "backend_pool" {
+  name                = "backendpool"
+  loadbalancer_id     = azurerm_lb.lb.id
+}
+
+resource "azurerm_lb_rule" "lb_rule" {
+  name                           = "lb-rule"
+  protocol                       = "Tcp"
+  frontend_port                  = 80
+  backend_port                   = 80
+  frontend_ip_configuration_id   = azurerm_lb_frontend_ip_configuration.frontend.id
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.backend_pool.id
+}
+
+resource "azurerm_lb_frontend_ip_configuration" "frontend" {
+  name                = "frontend"
+  loadbalancer_id     = azurerm_lb.lb.id
+  subnet_id           = var.subnet_id
+}
