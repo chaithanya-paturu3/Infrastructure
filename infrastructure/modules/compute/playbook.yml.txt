@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: Update all packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Set hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Configure network
+      copy:
+        src: /path/to/network/config
+        dest: /etc/network/interfaces
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Download application binary
+      get_url:
+        url: "{{ app_binary_url }}"
+        dest: /opt/app-binary.tar.gz
+        mode: 0755
+
+    - name: Extract application binary
+      unarchive:
+        src: /opt/app-binary.tar.gz
+        dest: /opt/application/
+        remote_src: yes
+
+    - name: Start application
+      shell: nohup /opt/application/start.sh &
